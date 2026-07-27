@@ -1,5 +1,19 @@
 # 5G Threat Detection Simulation on AWS
 
+![AWS](https://img.shields.io/badge/AWS-EC2%20%7C%20GuardDuty%20%7C%20CloudTrail-FF9900?logo=amazonaws&logoColor=white)
+![Open5GS](https://img.shields.io/badge/5G%20Core-Open5GS-1B2A4A)
+![srsRAN](https://img.shields.io/badge/RAN-srsRAN-1B2A4A)
+![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Amazon%20Linux-FCC624?logo=linux&logoColor=black)
+![Status](https://img.shields.io/badge/MSc%20Thesis-National%20College%20of%20Ireland-2EA44F)
+
+MSc Cybersecurity thesis project (National College of Ireland): a simulated private 5G network built on AWS, used to evaluate how well Amazon GuardDuty detects real attacks against telecom infrastructure.
+
+**At a glance**
+- Simulated a full private 5G stack on AWS — Open5GS core network + srsRAN radio access network — across a dedicated multi-subnet VPC.
+- Launched real attack scenarios (port/network scanning, SSH brute-force, DNS exfiltration) against the environment.
+- Amazon GuardDuty logged **350+ findings**, including high-severity **TorRelay** and **DNS exfiltration** activity, across UnauthorizedAccess, Recon and PrivilegeEscalation categories.
+- Full write-up, methodology and screenshots in [final.pdf](final.pdf).
+
 ## Overview
 This project demonstrates the setup of a simulated private 5G network on Amazon Web Services (AWS) to evaluate the real-time threat detection capabilities of Amazon GuardDuty. The environment uses Open5GS for core network functions and srsRAN for radio access network (RAN) simulation. It includes configurations for threat simulation scenarios, such as network scans, brute-force attacks, and DNS exfiltration, to test GuardDuty's detection accuracy, response time, and performance overhead.
 
@@ -121,3 +135,8 @@ For srsRAN setup:
 For the complete guide with screenshots and detailed outputs, download [final.pdf](final.pdf).
 
 This setup showcases hands-on experience with cloud security, 5G tech, and threat modeling—perfect for roles in cybersecurity, cloud engineering, or telecom. Feel free to reach out for collaborations!
+
+---
+
+**Ammad Ud Din Bajwa** — MSc Cybersecurity, National College of Ireland · SOC Analyst | Incident Response | Cybersecurity Operations
+[LinkedIn](https://www.linkedin.com/in/ammaduddinbajwa) · [GitHub](https://github.com/ammaduddinbajwa) · ammaduddinbajwa702@gmail.com
