@@ -26,7 +26,13 @@ This setup provides a secure, cloud-native testbed for integrating 5G networks w
 - Linux System Administration (Ubuntu, Amazon Linux)
 - DevOps Tools (Git, Meson, Ninja, CMake)
 
-## System Requirements
+## Published Materials and Reproducibility
+
+This repository currently contains this README and the thesis report, `final.pdf`. Standalone deployment scripts, Open5GS/srsRAN configurations, and sanitised finding exports are not included. The reported 350+ findings are a thesis result, not independently reproduced by this repository.
+
+The original README mixed an Amazon Linux 2/t2.micro connectivity prototype with an Ubuntu/t2.medium 5G environment. The architecture below describes the stated 5G environment; consult the report for implementation evidence. This README is not a complete deployment guide.
+
+## Reported System Requirements
 
 ### Hardware Requirements
 | Component     | Instance Type | Storage      | Operating System       | Network CIDR | Subnets          |
@@ -50,59 +56,18 @@ This setup provides a secure, cloud-native testbed for integrating 5G networks w
 - **IAM Policies:** AmazonEC2FullAccess, AmazonVPCFullAccess, AmazonGuardDutyFullAccess, CloudWatchLogsFullAccess
 - **Networking:** VPC with Internet Gateway, Security Groups for Core and RAN Subnets
 
-## Setup Instructions
-Follow these steps to reproduce the environment. For detailed reproduction, refer to the [Appendix](#appendix-detail-instructions-for-result-reproduction) or the attached [final.pdf](final.pdf).
+## Environment Overview
 
-### 1. Create VPC and Subnets
-- VPC: MVP-5G-VPC (CIDR: 10.0.0.0/16)
-- Core Subnet: MVP-5G-Core-Subnet (CIDR: 10.0.1.0/24)
-- RAN Subnet: MVP-5G-RAN-Subnet (CIDR: 10.0.2.0/24)
+- Dedicated VPC with core and RAN subnets.
+- Open5GS core and srsRAN components hosted on EC2, as described in the thesis.
+- GuardDuty monitoring with supporting AWS logging.
+- Reported threat scenarios include reconnaissance, failed SSH authentication, and DNS-related activity.
 
-### 2. Create and Attach Internet Gateway
-- Internet Gateway: MVP-5G-IGW attached to MVP-5G-VPC
+Exact component versions, configurations, attack commands, and the mapping from each scenario to observed findings should be checked against `final.pdf` before attempting reproduction. A DNS lookup or port scan alone does not demonstrate DNS exfiltration, and the total finding count does not measure detection accuracy or unique attacks.
 
-### 3. Configure Route Tables
-- Core Route Table: MVP-5G-Core-RT with route 0.0.0.0/0 to MVP-5G-IGW, associated with MVP-5G-Core-Subnet
+## Access and Lab Scope
 
-### 4. Launch EC2 Instances
-- **Core Instance:** MVP-5G-Core-Instance (Amazon Linux 2, t2.micro, MVP-5G-Core-Subnet, Security: SSH 22, HTTP 80)
-- **RAN Instance:** MVP-5G-RAN-Instance (Amazon Linux 2, t2.micro, MVP-5G-RAN-Subnet, Security: SSH 22, Custom TCP 8080)
-
-### 5. Install and Configure Software on Core Instance
-- SSH into Core: `ssh -i AmmadMVPKeyPair.pem ec2-user@<core-ip>`
-- Update: `sudo yum update -y`
-- Install Apache: `sudo yum install httpd -y`
-- Start HTTP: `sudo systemctl start httpd && sudo systemctl enable httpd`
-- Create Web Page: `echo "<h1>MVP 5G Core Instance</h1>" > /var/www/html/index.html`
-
-For Open5GS setup (on Ubuntu instance):
-- Install Dependencies: `sudo apt install -y build-essential meson ninja-build ...` (full list in PDF)
-- Clone and Build Open5GS: `git clone https://github.com/open5gs/open5gs.git && cd open5gs && meson build --prefix=`pwd`/install && ninja -C build install`
-- Start MongoDB: `sudo apt install -y mongodb && sudo systemctl start mongodb`
-- Add Subscriber: `./open5gs-dbctl add 001010123456789 123456789012345`
-- Start Services: `./open5gs-mmed & ./open5gs-smfd & ...`
-
-### 6. Install and Configure Software on RAN Instance
-- SSH into RAN: `ssh -i AmmadMVPKeyPair.pem ec2-user@<ran-ip>`
-- Update: `sudo yum update -y`
-- Install curl: `sudo yum install curl -y`
-
-For srsRAN setup:
-- Install Dependencies: `sudo apt install -y git build-essential cmake libconfig++-dev`
-- Clone and Build: `git clone https://github.com/srsran/srsRAN.git && cd srsRAN && mkdir build && cd build && cmake ../ && make && sudo make install`
-- Configure gNB: Edit `/usr/local/etc/srsran/gnb.conf` to set core IP
-- Start UE Simulator: `sudo srsue`
-
-### 7. Simulate Network Traffic and Threats
-- From RAN to Core: `curl http://<core-ip>` or loop: `while true; do curl http://<core-ip>; sleep 1; done`
-- Install nmap: `sudo yum install nmap -y`
-- Port Scan: `nmap -sS -Pn <core-ip>`
-- SSH Brute Force: `ssh ec2-user@<core-ip>` (simulate failed attempts)
-- DNS Exfiltration: `sudo yum install bind-utils -y && dig baddomain.example.com && nc -zv <core-ip> 23-25`
-
-### 8. Enable and Monitor GuardDuty
-- Enable GuardDuty in AWS Console
-- Monitor findings for detected threats (e.g., TorRelay, Recon, UnauthorizedAccess)
+Use an isolated environment you own or are authorised to test. The broad AWS FullAccess policies listed in the report describe the lab setup; they are not a least-privilege production recommendation. Restrict access to the required resources and remove chargeable resources after testing.
 
 ## Results
 - GuardDuty detected over 350 findings, including high-severity threats like TorRelay and DNS exfiltration.
@@ -120,21 +85,10 @@ For srsRAN setup:
 8. BIND Utilities (dig): https://linux.die.net/man/1/dig
 9. Netcat (nc): https://netcat.sourceforge.net/
 
-## Appendix: Detail Instructions for Result Reproduction
-| Instructions | Code/Output |
-|--------------|-------------|
-| Using Root Privileges | - Access type: AWS Management Console access<br>- Policies: AmazonEC2FullAccess, AmazonVPCFullAccess, AmazonGuardDutyFullAccess, CloudWatchLogsFullAccess |
-| Create VPC to Simulate 5G Network | MVP-5G-VPC<br>10.0.0.0/16 |
-| Core Subnet | MVP-5G-Core-Subnet<br>10.0.1.0/24 |
-| RAN Subnet | MVP-5G-RAN-Subnet<br>10.0.2.0/24 |
-| Create and Attach Internet Gateway | MVP-5G-IGW<br>MVP-5G-VPC |
-| Configure Route Tables | MVP-5G-Core-RT<br>Destination 0.0.0.0/0 → Target MVP-5G-IGW<br>MVP-5G-Core-Subnet |
-| Launch EC2 Instances | Core: MVP-5G-Core-Instance, Amazon Linux 2, t2.micro, MVP-5G-Core-Subnet, SSH(22), HTTP(80)<br>RAN: MVP-5G-RAN-Instance, Amazon Linux 2, t2.micro, MVP-5G-RAN-Subnet, SSH(22), Custom TCP(8080) |
-| ... (Full appendix in PDF) | ... |
+## Implementation Evidence
 
-For the complete guide with screenshots and detailed outputs, download [final.pdf](final.pdf).
+See [final.pdf](final.pdf) for the original methodology, screenshots, and reported outputs. Runnable configuration files and sanitised finding data would be needed to make independent reproduction possible.
 
-This setup showcases hands-on experience with cloud security, 5G tech, and threat modeling—perfect for roles in cybersecurity, cloud engineering, or telecom. Feel free to reach out for collaborations!
 
 ---
 
